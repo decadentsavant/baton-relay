@@ -1,26 +1,28 @@
-const invite = document.getElementById('invite')
-const status = document.getElementById('copy-status')
-invite?.addEventListener('click', async () => {
-  const text = `${invite.dataset.story} Put a wave in your Omarchy bar. ${location.origin}${location.pathname}`
-  try {
-    await navigator.clipboard.writeText(text)
-    status.textContent = 'Invite copied. Share it when you feel like it.'
-  } catch {
-    status.textContent = 'Copy this invite to share:'
-    let field = document.getElementById('manual-invite')
-    if (!field) {
-      field = document.createElement('textarea')
-      field.id = 'manual-invite'
-      field.readOnly = true
-      field.setAttribute('aria-label', 'Invite to copy')
-      status.after(field)
+const invite = document.getElementById('invite-text')
+if (invite) {
+  invite.value = `${invite.dataset.story}\n\nInstall Baton and say hello:\n${location.origin}${location.pathname}`
+}
+
+for (const button of document.querySelectorAll('[data-copy]')) {
+  button.addEventListener('click', async () => {
+    const field = document.getElementById(button.dataset.copy)
+    const status = document.getElementById(button.dataset.status)
+    const text = field.value ?? field.textContent
+    try {
+      await navigator.clipboard.writeText(text)
+      status.textContent = button.dataset.success
+    } catch {
+      if (typeof field.select === 'function') {
+        field.focus()
+        field.select()
+      } else {
+        const range = document.createRange()
+        range.selectNodeContents(field)
+        const selection = window.getSelection()
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
+      status.textContent = 'Automatic copy isn’t available. Copy the selected text instead.'
     }
-    field.value = text
-    field.focus()
-    field.select()
-  }
-})
-if (location.origin !== 'https://relay.baton.buzz') {
-  document.getElementById('custom-relay').hidden = false
-  document.getElementById('relay-origin').textContent = location.origin
+  })
 }
