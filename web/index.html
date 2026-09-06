@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title><meta name="description" content="{{.Description}}">
+<meta property="og:title" content="{{.Title}}"><meta property="og:description" content="{{.Description}}"><meta property="og:type" content="website">
+<meta name="theme-color" content="#16251e">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/site.js" defer></script>
+</head>
+<body><main>
+<header><a href="/" class="brand" aria-label="Baton home"><span aria-hidden="true">↗</span> baton</a><span class="tag">ONE BIT OUT. ONE BIT BACK.</span></header>
+{{if .Selected}}
+<section class="hero"><p class="eyebrow">A LITTLE THING THAT KEEPS GOING</p><h1>You’re part of<br>something small.</h1><p class="intro">A stranger passed this baton on. Then another. No names, no messages. Just people saying hello.</p>
+<div class="journey" aria-label="Baton statistics"><div><strong>{{.Selected.Hops}}</strong><span>{{if eq .Selected.Hops 1}}hop{{else}}hops{{end}}</span></div><div><strong>{{.Selected.Age}}</strong><span>alive</span></div><div><strong>{{.Selected.Countries}}</strong><span>{{if eq .Selected.Countries 1}}country{{else}}countries{{end}}</span></div></div>
+<button id="invite" data-story="This baton has travelled {{.Selected.HopLabel}} across {{.Selected.CountryLabel}}.">Copy invite <span aria-hidden="true">↗</span></button><p id="copy-status" role="status" aria-live="polite"></p></section>
+{{else}}
+<section class="hero"><p class="eyebrow">A SMALL HELLO, SOMEWHERE IN THE WORLD</p><h1>Someone’s<br>out there.</h1><p class="intro">Click the hand in your Omarchy bar. A stranger’s desktop lights up. Sometimes your wave carries a baton that’s been travelling for weeks.</p><a class="button" href="#install">Put a wave in your bar <span aria-hidden="true">↗</span></a><button class="quiet" id="invite" data-story="Wave at a random Omarchy user, somewhere in the world.">Copy invite</button><p id="copy-status" role="status" aria-live="polite"></p>
+<div class="presence"><span class="dot" aria-hidden="true"></span>{{.Online}} online <span>·</span> {{.Total}} waves sent</div></section>
+<section class="collection"><div class="section-title"><h2>Still travelling</h2><span>Objects with a story. People without a profile.</span></div>
+{{range .Batons}}<a class="baton-card" href="/b/{{.ID}}"><span class="baton-mark" aria-hidden="true">↗</span><strong>{{.HopLabel}}</strong><span>alive {{.Age}}</span><span>{{.CountryLabel}}</span><span class="arrow" aria-hidden="true">↗</span></a>{{else}}<p class="empty">The next wave could start something. Batons appear here as they’re born.</p>{{end}}</section>
+{{end}}
+<section id="install" class="install"><div><p class="eyebrow">FOR YOUR OMARCHY DESKTOP</p><h2>A hand in your bar.<br>That’s the whole app.</h2><p>One wave an hour. A random stranger. No account, no message field, no history.</p><p>Country sharing is optional. Batons remember only their age, hops, and country count.</p></div><div class="install-code"><span class="code-label">INSTALL IN YOUR TERMINAL</span><pre><code>omarchy plugin add https://github.com/decadentsavant/baton.git --enable
+omarchy bar put io.github.decadentsavant.baton --section right</code></pre><p id="custom-relay" hidden>This page belongs to a separate relay. To join this crowd, set your Relay URL to <code id="relay-origin"></code> in the widget settings. Relays don’t federate.</p><a href="https://github.com/decadentsavant/baton#install">Installation &amp; source ↗</a></div></section>
+<footer><span>A baton remembers a journey. Never who carried it.</span><a href="/batons">Public data ↗</a></footer>
+</main></body></html>

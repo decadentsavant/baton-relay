@@ -1,0 +1,21 @@
+# Caddy in front of the relay: automatic HTTPS, and the one job that matters
+# for privacy, making sure only Caddy's own view of the caller reaches the relay.
+#
+#   sudo install -m 0644 deploy/Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Replace the hostname. Caddy sets X-Forwarded-For to the caller's real address
+# and, because the relay trusts 127.0.0.1 only, that is the only header it will
+# believe. Caller-supplied country headers are stripped here so a client cannot
+# claim to be somewhere it is not.
+relay.baton.buzz {
+	encode zstd gzip
+
+	reverse_proxy 127.0.0.1:8080 {
+		header_up -CF-IPCountry
+		header_up -X-Country
+		header_up -CF-Connecting-IP
+		# The stream is a long-lived response with no length; Caddy flushes it
+		# as it arrives. Nothing to tune, but do not add response buffering.
+	}
+}

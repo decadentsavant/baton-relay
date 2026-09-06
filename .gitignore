@@ -1,0 +1,5 @@
+/baton-relay
+/state.json
+/state.json.tmp
+/country-*.csv
+*.log

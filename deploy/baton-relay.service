@@ -1,0 +1,42 @@
+# systemd unit for a relay on a small VPS, behind Caddy on the same machine.
+#
+#   sudo useradd --system --home /var/lib/baton --create-home baton
+#   sudo install -m 0755 baton-relay /usr/local/bin/baton-relay
+#   sudo install -m 0644 deploy/baton-relay.service /etc/systemd/system/
+#   sudo -u baton deploy/fetch-country-db.sh /var/lib/baton
+#   sudo systemctl enable --now baton-relay
+#
+# Only 127.0.0.1 is trusted to set forwarding headers, which is exactly the
+# Caddy in deploy/Caddyfile. Country comes from the range lists in the state
+# directory; drop the -country-db flag to run without countries at all.
+[Unit]
+Description=Baton relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=baton
+Group=baton
+StateDirectory=baton
+ExecStart=/usr/local/bin/baton-relay \
+  -addr 127.0.0.1:8080 \
+  -state /var/lib/baton/state.json \
+  -trusted-proxies 127.0.0.1/32,::1/128 \
+  -country-db /var/lib/baton/country-ipv4.csv,/var/lib/baton/country-ipv6.csv
+Restart=on-failure
+RestartSec=2
+# The relay never shells out, listens on loopback only, and writes just its
+# state directory, so the sandbox can be tight.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+
+[Install]
+WantedBy=multi-user.target
