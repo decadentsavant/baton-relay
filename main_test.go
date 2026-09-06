@@ -540,3 +540,17 @@ func TestMinClientAdvertised(t *testing.T) {
 		}
 	}
 }
+func TestCommas(t *testing.T) {
+	for n, want := range map[int64]string{0: "0", 999: "999", 1000: "1,000", 120491: "120,491", 1204891: "1,204,891"} {
+		if got := commas(n); got != want {
+			t.Fatalf("commas(%d) = %q, want %q", n, got, want)
+		}
+	}
+	r := testRelay(t)
+	r.total = 120491
+	w := httptest.NewRecorder()
+	r.routes().ServeHTTP(w, httptest.NewRequest("GET", "/", nil))
+	if !strings.Contains(w.Body.String(), "120,491") {
+		t.Fatal("home page does not group the wave total")
+	}
+}

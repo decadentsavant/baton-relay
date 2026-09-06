@@ -51,6 +51,24 @@ type pageData struct {
 	Online             int
 }
 
+// TotalLabel groups digits so a large wave count reads at a glance.
+func (d pageData) TotalLabel() string { return commas(d.Total) }
+
+func commas(n int64) string {
+	digits := fmt.Sprint(n)
+	if n < 0 {
+		return "-" + commas(-n)
+	}
+	var out strings.Builder
+	for i, c := range digits {
+		if i > 0 && (len(digits)-i)%3 == 0 {
+			out.WriteByte(',')
+		}
+		out.WriteRune(c)
+	}
+	return out.String()
+}
+
 func publicRow(b *baton, now time.Time) publicBaton {
 	return publicBaton{b.ID, b.Hops, ageLabel(now.Sub(b.Born)), len(b.Countries)}
 }
