@@ -113,6 +113,7 @@ type relay struct {
 	emptyCooldown  time.Duration
 	addrBudget     int
 	streamCap      int
+	minClient      string
 
 	total     int64
 	statePath string
@@ -275,8 +276,34 @@ func (r *relay) spendLocked(id, addr string, now time.Time, delivered bool) int 
 }
 
 func (r *relay) stateLocked(id, addr string, now time.Time) frame {
-	return frame{"type": "state", "remaining": r.remainingLocked(id, addr, now),
+	f := frame{"type": "state", "remaining": r.remainingLocked(id, addr, now),
 		"baton": r.batonFrameLocked(r.batonHeldByLocked(id))}
+	if r.minClient != "" {
+		f["minClient"] = r.minClient
+	}
+	return f
+}
+
+// A plugin is a git clone that only moves when its owner runs
+// `omarchy plugin update`, so old widgets can stay out there indefinitely.
+// The relay cannot update them, but it can say which version it still speaks
+// to, and the widget turns that into a hint. Dotted digits only, so the value
+// compares cleanly on the client and cannot carry anything else.
+func validVersion(v string) bool {
+	if v == "" {
+		return false
+	}
+	for _, part := range strings.Split(v, ".") {
+		if part == "" {
+			return false
+		}
+		for _, c := range part {
+			if c < '0' || c > '9' {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // -------------------------------------------------------------- identity
@@ -723,6 +750,7 @@ func main() {
 	streamCap := flag.Int("streams-per-address", defaultStreamsPerAddress, "open streams allowed per address (0 disables the cap)")
 	proxyList := flag.String("trusted-proxies", "", "comma-separated proxy IPs/CIDRs allowed to set country and forwarding headers")
 	geoList := flag.String("country-db", "", "comma-separated CSV range lists (start,end,country) for country lookup")
+	minClient := flag.String("min-client", "", "oldest plugin version this relay supports, advertised to clients (empty advertises nothing)")
 	flag.Parse()
 	if *cooldown <= 0 {
 		log.Fatal("cooldown must be positive")
@@ -742,6 +770,12 @@ func main() {
 		log.Fatal(err)
 	}
 	r.emptyCooldown, r.addrBudget, r.streamCap = *emptyCooldown, *addrBudget, *streamCap
+	if *minClient != "" {
+		if !validVersion(*minClient) {
+			log.Fatalf("min-client must be dotted digits like 0.4.0, got %q", *minClient)
+		}
+		r.minClient = *minClient
+	}
 
 	if paths := splitList(*geoList); len(paths) > 0 {
 		geo, err := loadCountryDB(paths)

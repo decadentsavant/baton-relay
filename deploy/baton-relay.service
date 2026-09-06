@@ -9,6 +9,10 @@
 # Only 127.0.0.1 is trusted to set forwarding headers, which is exactly the
 # Caddy in deploy/Caddyfile. Country comes from the range lists in the state
 # directory; drop the -country-db flag to run without countries at all.
+#
+# -min-client is the oldest plugin version this relay fully supports. Widgets
+# behind it show an update hint in their tooltip. Raise it when a protocol
+# change leaves old widgets without something they need.
 [Unit]
 Description=Baton relay
 After=network-online.target
@@ -22,7 +26,8 @@ ExecStart=/usr/local/bin/baton-relay \
   -addr 127.0.0.1:8080 \
   -state /var/lib/baton/state.json \
   -trusted-proxies 127.0.0.1/32,::1/128 \
-  -country-db /var/lib/baton/country-ipv4.csv,/var/lib/baton/country-ipv6.csv
+  -country-db /var/lib/baton/country-ipv4.csv,/var/lib/baton/country-ipv6.csv \
+  -min-client 0.4.0
 Restart=on-failure
 RestartSec=2
 # The relay never shells out, listens on loopback only, and writes just its

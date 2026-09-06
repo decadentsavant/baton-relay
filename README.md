@@ -39,6 +39,7 @@ Flags:
 | `-streams-per-address` | `8` | Open streams allowed per address. `0` disables the cap. |
 | `-trusted-proxies` | empty | Proxy IPs/CIDRs allowed to set forwarding and country headers. |
 | `-country-db` | empty | CSV range lists (`start,end,country`) for country lookup. |
+| `-min-client` | empty | Oldest plugin version this relay supports, e.g. `0.4.0`. Empty advertises nothing. |
 
 ## Deploying on a small VPS
 
@@ -109,7 +110,7 @@ Newline-delimited JSON, not SSE. Line splitting is something Quickshell's
 `GET /stream` — long-lived. Requires `X-Baton-Id`. Emits:
 
     {"type":"stats","total":120491,"online":3847}
-    {"type":"state","remaining":1800,"baton":null}
+    {"type":"state","remaining":1800,"baton":null,"minClient":"0.4.0"}
     {"type":"wave","origin":"PL"}
     {"type":"wave","origin":"PL","baton":{"id":"a3f…","born":"2026-09-04T12:00:00Z","hops":412,"countries":23}}
     {"type":"baton","baton":{…}}          // an orphan re-homed to you
@@ -131,6 +132,19 @@ whether a baton actually left your hands.
 `state` is sent on connection and after the sender's wave attempt; it carries
 the authoritative cooldown and current baton (or null). Ownership changes must
 be applied from this ordered stream, not a potentially delayed POST response.
+`minClient` is present only when the relay runs with `-min-client`.
+
+## Client versions
+
+The plugin is a git clone in the user's Omarchy config. Nothing pulls it
+automatically; it moves only when its owner runs `omarchy plugin update`, so
+any version ever published may still be connecting. The relay has no way to
+update a widget, and it does not reject old ones. What it can do is state the
+oldest version it still fully supports, with `-min-client`. A widget that
+reads `minClient` from the `state` frame and finds itself behind adds an
+update hint to its tooltip and sends one notification per session. Widgets
+older than 0.4.0 ignore the field, so raise the floor only when the protocol
+actually changes, and keep old frames readable for as long as you can.
 
 `GET /` — public listing and installation instructions.
 `GET /b/<id>` — shareable baton page with server-rendered social metadata.

@@ -504,3 +504,39 @@ func TestAgeLabelMatchesWidget(t *testing.T) {
 		}
 	}
 }
+func TestMinClientAdvertised(t *testing.T) {
+	r := testRelay(t)
+	if _, ok := r.stateLocked("alicealice", "addr", time.Now())["minClient"]; ok {
+		t.Fatal("minClient advertised without a floor")
+	}
+	r.minClient = "0.4.0"
+	s := httptest.NewServer(r.routes())
+	defer s.Close()
+	q, _ := http.NewRequest("GET", s.URL+"/stream", nil)
+	q.Header.Set("X-Baton-Id", "alicealice")
+	p, e := s.Client().Do(q)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer p.Body.Close()
+	reader := bufio.NewReader(p.Body)
+	reader.ReadBytes('\n')
+	line, e := reader.ReadBytes('\n')
+	if e != nil {
+		t.Fatal(e)
+	}
+	var f frame
+	json.Unmarshal(line, &f)
+	if f["type"] != "state" || f["minClient"] != "0.4.0" {
+		t.Fatal(string(line))
+	}
+	f = post(r, "alicealice", "192.0.2.1:123")
+	if _, ok := f["minClient"]; ok {
+		t.Fatal("wave reply should not carry minClient; it travels on the stream")
+	}
+	for v, want := range map[string]bool{"0.4.0": true, "1": true, "0.4": true, "": false, "v0.4.0": false, "0..4": false, "0.4.": false, "0.4.0-rc1": false} {
+		if validVersion(v) != want {
+			t.Fatalf("validVersion(%q) = %v", v, !want)
+		}
+	}
+}
